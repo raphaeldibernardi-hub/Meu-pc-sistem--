@@ -1,0 +1,32 @@
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
+
+@RestController
+@RequestMapping("/ia/nuvem")
+public class ConexaoCognitivaController {
+
+    private final WebClient webClient;
+
+    public ConexaoCognitivaController(WebClient.Builder webClientBuilder) {
+        // O WebClient é o canal de comunicação blindado com a nuvem
+        this.webClient = webClientBuilder.baseUrl("https://api.provedor-llm.com/v1").build();
+    }
+
+    @PostMapping("/processar")
+    public Mono<String> processarComandoNuvem(@RequestBody String textoTranscrito) {
+        // Envia o texto para a nuvem e mantém o estado de prontidão
+        return webClient.post()
+                .uri("/completions")
+                .header("Authorization", "Bearer SEU_TOKEN_SEGURO")
+                .bodyValue(formatarPayloadSeguro(textoTranscrito))
+                .retrieve()
+                .bodyToMono(String.class);
+    }
+    
+    private String formatarPayloadSeguro(String texto) {
+        // Lógica para estruturar o JSON garantindo que as diretrizes do sistema 
+        // e o histórico sejam anexados antes do envio.
+        return "{ \"prompt\": \"" + texto + "\", \"max_tokens\": 150 }";
+    }
+}
